@@ -15,6 +15,21 @@ export interface Suggestion {
   popularity?: number
 }
 
+// Fetch with timeout
+const fetchWithTimeout = async (url: string, timeout = 5000): Promise<Response> => {
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), timeout)
+
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    clearTimeout(id)
+    return response
+  } catch (error) {
+    clearTimeout(id)
+    throw error
+  }
+}
+
 // Debounce search queries
 export const debounceSearch = (callback: (query: string) => void, delay = 300) => {
   let timeoutId: NodeJS.Timeout
@@ -29,7 +44,7 @@ export const getSearchSuggestions = async (query: string, type: 'all' | 'destina
   if (!query || query.length < 2) return []
 
   try {
-    const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&type=${type}`)
+    const response = await fetchWithTimeout(`/api/search/suggestions?q=${encodeURIComponent(query)}&type=${type}`, 5000)
     if (!response.ok) return []
     const data = await response.json()
     return data.suggestions || []
@@ -44,7 +59,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
   if (!query || query.length < 2) return []
 
   try {
-    const response = await fetch(`/api/search/global?q=${encodeURIComponent(query)}`)
+    const response = await fetchWithTimeout(`/api/search/global?q=${encodeURIComponent(query)}`, 5000)
     if (!response.ok) return []
     const data = await response.json()
     return data.results || []
