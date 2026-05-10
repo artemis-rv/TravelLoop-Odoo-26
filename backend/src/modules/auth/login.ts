@@ -19,10 +19,11 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<v
       return;
     }
 
+    const secret = process.env.JWT_SECRET || "default_secret";
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_SECRET as string,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+      secret,
+      { expiresIn: (process.env.JWT_EXPIRES_IN || "7d") as any }
     );
 
     res.json({
