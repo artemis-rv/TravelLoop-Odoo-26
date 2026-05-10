@@ -232,23 +232,6 @@ export const CreateTrip: React.FC = () => {
         </div>
       </form>
     </div>
-        </div>
-
-        <div className="flex gap-4 pt-4">
-          <Button type="submit" loading={loading} size="lg">
-            Save Trip
-          </Button>
-
-          <Button
-            type="button"
-            variant="secondary"
-            size="lg"
-            onClick={() => navigate('/')}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </div>
   )
 }
+
