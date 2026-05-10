@@ -1,8 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTripStore } from '@/store/trip.store'
 import { EmptyState } from '@/components/common/EmptyState'
-import { Loader } from '@/components/common/Loader'
+import { TripFilterPanel } from '@/components/common/TripFilterPanel'
+import { SkeletonGrid } from '@/components/ui/Skeleton'
+import { filterTrips, sortTrips, TripFilter } from '@/utils/filtering'
+import { exportTripsToCSV } from '@/utils/export'
 import api from '@/services/api'
 import toast from 'react-hot-toast'
 
@@ -11,6 +14,10 @@ export const Dashboard: React.FC = () => {
   const setTrips = useTripStore((state) => state.setTrips)
   const isLoading = useTripStore((state) => state.isLoading)
   const setLoading = useTripStore((state) => state.setLoading)
+  
+  const [filters, setFilters] = useState<TripFilter>({ status: 'all' })
+  const [sortBy, setSortBy] = useState<'date' | 'destination' | 'budget'>('date')
+  const [showFilter, setShowFilter] = useState(false)
 
   useEffect(() => {
     fetchTrips()
@@ -29,12 +36,19 @@ export const Dashboard: React.FC = () => {
     }
   }
 
-  if (isLoading) {
-    return <Loader fullScreen />
+  const handleFilterChange = (newFilters: TripFilter) => {
+    setFilters(newFilters)
   }
 
+  const handleResetFilters = () => {
+    setFilters({ status: 'all' })
+  }
+
+  const filteredTrips = filterTrips(trips, filters)
+  const sortedTrips = sortTrips(filteredTrips, sortBy)
+
   // Map trips to display with default images
-  const trips_list = trips.map((trip, index) => ({
+  const trips_list = sortedTrips.map((trip, index) => ({
     id: trip.id,
     title: trip.destination,
     image: [
@@ -103,20 +117,61 @@ export const Dashboard: React.FC = () => {
       <section>
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-4xl font-black">Upcoming Trips</h2>
-          <Link
-            to="/trip/create"
-            className="bg-brand-gold px-6 py-3 rounded-2xl font-bold hover:scale-105 transition"
-          >
-            Create New
-          </Link>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowFilter(!showFilter)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <span>🔍</span> Filter
+            </button>
+            <button
+              onClick={() => exportTripsToCSV(sortedTrips)}
+              disabled={sortedTrips.length === 0}
+              className="bg-green-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <span>📥</span> Export CSV
+            </button>
+            <Link
+              to="/trip/create"
+              className="bg-brand-gold px-6 py-3 rounded-2xl font-bold hover:scale-105 transition"
+            >
+              Create New
+            </Link>
+          </div>
         </div>
 
-        {trips.length === 0 ? (
+        {/* Filter Panel */}
+        {showFilter && (
+          <div className="mb-6">
+            <TripFilterPanel onFilterChange={handleFilterChange} onReset={handleResetFilters} />
+          </div>
+        )}
+
+        {/* Sort Dropdown */}
+        {sortedTrips.length > 0 && (
+          <div className="mb-6 flex items-center gap-3">
+            <label className="font-semibold text-gray-700">Sort by:</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="date">Date</option>
+              <option value="destination">Destination</option>
+              <option value="budget">Budget</option>
+            </select>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading ? (
+          <SkeletonGrid count={3} />
+        ) : sortedTrips.length === 0 ? (
           <div className="bg-white rounded-[30px] border border-brand-border p-8">
             <EmptyState
               icon="✈️"
-              title="No trips yet"
-              description="Start planning your next adventure"
+              title={trips.length === 0 ? "No trips yet" : "No trips match your filters"}
+              description={trips.length === 0 ? "Start planning your next adventure" : "Try adjusting your filters"}
               action={{
                 label: 'Create Trip',
                 onClick: () => window.location.href = '/trip/create',
@@ -128,7 +183,7 @@ export const Dashboard: React.FC = () => {
             {trips_list.map((trip) => (
               <div
                 key={trip.id}
-                className="bg-white rounded-[30px] overflow-hidden border border-brand-border"
+                className="bg-white rounded-[30px] overflow-hidden border border-brand-border hover:shadow-lg transition"
               >
                 <div
                   className="h-72 bg-cover bg-center"

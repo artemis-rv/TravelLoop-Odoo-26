@@ -2,6 +2,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useEffect } from 'react'
 import { useAuthStore } from '@/store/auth.store'
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { AppRoutes } from '@/routes/AppRoutes'
 import { initializeSocket } from '@/services/socket'
 
@@ -22,9 +23,11 @@ export default function App() {
   }, [isAuthenticated])
 
   return (
-    <BrowserRouter>
-      <AppRoutes />
-      <Toaster position="top-right" />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppRoutes />
+        <Toaster position="top-right" />
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
