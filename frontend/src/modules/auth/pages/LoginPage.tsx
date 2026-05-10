@@ -103,9 +103,6 @@ export const LoginPage: React.FC = () => {
               error={touched['email'] && fieldErrors['email']}
               disabled={loading}
             />
-            {touched['email'] && fieldErrors['email'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['email']}</p>
-            )}
           </div>
 
           <div>
@@ -121,9 +118,6 @@ export const LoginPage: React.FC = () => {
               error={touched['password'] && fieldErrors['password']}
               disabled={loading}
             />
-            {touched['password'] && fieldErrors['password'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['password']}</p>
-            )}
           </div>
 
           <Button 

@@ -132,9 +132,6 @@ export const CreateTrip: React.FC = () => {
               error={touched['destination'] && fieldErrors['destination']}
               disabled={loading}
             />
-            {touched['destination'] && fieldErrors['destination'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['destination']}</p>
-            )}
           </div>
 
           <div>
@@ -164,9 +161,6 @@ export const CreateTrip: React.FC = () => {
               error={touched['startDate'] && fieldErrors['startDate']}
               disabled={loading}
             />
-            {touched['startDate'] && fieldErrors['startDate'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['startDate']}</p>
-            )}
           </div>
 
           <div>
@@ -181,9 +175,6 @@ export const CreateTrip: React.FC = () => {
               error={touched['endDate'] && fieldErrors['endDate']}
               disabled={loading}
             />
-            {touched['endDate'] && fieldErrors['endDate'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['endDate']}</p>
-            )}
           </div>
         </div>
 
@@ -205,9 +196,6 @@ export const CreateTrip: React.FC = () => {
           <p className="text-xs text-brand-muted mt-1">
             {formData.description.length}/500 characters
           </p>
-          {touched['description'] && fieldErrors['description'] && (
-            <p className="text-red-500 text-sm mt-1">{fieldErrors['description']}</p>
-          )}
         </div>
 
         <div className="flex gap-4">

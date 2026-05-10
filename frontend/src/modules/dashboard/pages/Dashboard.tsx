@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTripStore } from '@/store/trip.store'
 import { EmptyState } from '@/components/common/EmptyState'
 import { TripFilterPanel } from '@/components/common/TripFilterPanel'
@@ -14,6 +14,8 @@ export const Dashboard: React.FC = () => {
   const setTrips = useTripStore((state) => state.setTrips)
   const isLoading = useTripStore((state) => state.isLoading)
   const setLoading = useTripStore((state) => state.setLoading)
+  
+  const navigate = useNavigate()
   
   const [filters, setFilters] = useState<TripFilter>({ status: 'all' })
   const [sortBy, setSortBy] = useState<'date' | 'destination' | 'budget'>('date')
@@ -135,7 +137,7 @@ export const Dashboard: React.FC = () => {
               to="/trip/create"
               className="bg-brand-gold px-6 py-3 rounded-2xl font-bold hover:scale-105 transition"
             >
-              Create New
+              Create Trip
             </Link>
           </div>
         </div>
@@ -174,10 +176,11 @@ export const Dashboard: React.FC = () => {
               description={trips.length === 0 ? "Start planning your next adventure" : "Try adjusting your filters"}
               action={{
                 label: 'Create Trip',
-                onClick: () => window.location.href = '/trip/create',
+                onClick: () => navigate('/trip/create'),
               }}
             />
           </div>
+
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {trips_list.map((trip) => (

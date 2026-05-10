@@ -134,9 +134,6 @@ export const RegisterPage: React.FC = () => {
               error={touched['name'] && fieldErrors['name']}
               disabled={loading}
             />
-            {touched['name'] && fieldErrors['name'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['name']}</p>
-            )}
           </div>
 
           <div>
@@ -152,9 +149,6 @@ export const RegisterPage: React.FC = () => {
               error={touched['email'] && fieldErrors['email']}
               disabled={loading}
             />
-            {touched['email'] && fieldErrors['email'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['email']}</p>
-            )}
           </div>
 
           <div>
@@ -169,11 +163,8 @@ export const RegisterPage: React.FC = () => {
               required
               error={touched['password'] && fieldErrors['password']}
               disabled={loading}
-              helperText="At least 8 characters with uppercase, lowercase, and numbers"
+              helperText={!fieldErrors['password'] ? "8+ characters, uppercase, lowercase, and numbers" : undefined}
             />
-            {touched['password'] && fieldErrors['password'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['password']}</p>
-            )}
           </div>
 
           <div>
@@ -189,9 +180,6 @@ export const RegisterPage: React.FC = () => {
               error={touched['confirmPassword'] && fieldErrors['confirmPassword']}
               disabled={loading}
             />
-            {touched['confirmPassword'] && fieldErrors['confirmPassword'] && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors['confirmPassword']}</p>
-            )}
           </div>
 
           <Button 
