@@ -28,15 +28,30 @@ const getRedis = async () => {
   if (!redisClient) {
     try {
       const url = process.env.REDIS_URL || "redis://localhost:6379";
-      redisClient = createClient({ url });
-      redisClient.on("error", () => {
-        // Silently handle — we check connection state before use
+      redisClient = createClient({
+        url,
+        socket: {
+          connectTimeout: 3000, // 3 second timeout
+        }
       });
-      await redisClient.connect();
+      redisClient.on("error", (err) => {
+        // console.error("[Redis] Error:", err.message);
+      });
+      
+      // Wrap connect in a timeout just in case the socket option doesn't catch it
+      const connectPromise = redisClient.connect();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout")), 3500)
+      );
+
+      await Promise.race([connectPromise, timeoutPromise]);
       console.log("[Redis] Connected successfully");
-    } catch {
-      console.warn("[Redis] Not available — caching disabled");
+    } catch (err: any) {
+      console.warn("[Redis] Not available or timed out — caching disabled");
       redisDisabled = true;
+      if (redisClient) {
+        try { await redisClient.disconnect(); } catch {}
+      }
       redisClient = null;
       return null;
     }
@@ -101,6 +116,7 @@ export const searchCities = async (query: string): Promise<CityResult[]> => {
           "X-RapidAPI-Key": apiKey,
           "X-RapidAPI-Host": apiHost,
         },
+        timeout: 8000, // 8 second timeout
       }
     );
 
@@ -111,10 +127,11 @@ export const searchCities = async (query: string): Promise<CityResult[]> => {
       longitude: city.longitude,
     }));
 
+    console.log(`[SearchService] GeoDB success: ${cities.length} results`);
     await setToCache(cacheKey, cities);
     return cities;
   } catch (err: any) {
-    console.error("[SearchService] GeoDB API error:", err.message);
+    console.error("[SearchService] GeoDB API error:", err.response?.data?.message || err.message);
     return [];
   }
 };
@@ -138,6 +155,7 @@ export const searchActivities = async (city: string): Promise<ActivityResult[]> 
       `https://api.opentripmap.com/0.1/en/places/geoname`,
       {
         params: { name: city, apikey: apiKey },
+        timeout: 5000,
       }
     );
 
@@ -158,6 +176,7 @@ export const searchActivities = async (city: string): Promise<ActivityResult[]> 
           format: "json",
           apikey: apiKey,
         },
+        timeout: 8000,
       }
     );
 
@@ -174,7 +193,7 @@ export const searchActivities = async (city: string): Promise<ActivityResult[]> 
     await setToCache(cacheKey, activities);
     return activities;
   } catch (err: any) {
-    console.error("[SearchService] OpenTripMap API error:", err.message);
+    console.error("[SearchService] OpenTripMap API error:", err.response?.data?.message || err.message);
     return [];
   }
 };

@@ -137,7 +137,6 @@ export const ProfilePage: React.FC = () => {
           {/* User Details */}
           {isEditing ? (
             <form onSubmit={handleSubmit} className="flex-1 space-y-3">
-              <p className="text-xs text-brand-muted mb-1">User Details with appropriate options to edit those information...</p>
               <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} required disabled={loading} />
               <Input label="Email" type="email" name="email" value={formData.email} onChange={handleChange} required disabled={loading} />
               <div className="flex gap-3 pt-1">
@@ -157,7 +156,6 @@ export const ProfilePage: React.FC = () => {
             </form>
           ) : (
             <div className="flex-1">
-              <p className="text-xs text-brand-muted mb-3">User Details with appropriate options to edit those information...</p>
               <div className="bg-brand-light rounded-2xl p-5 space-y-2 mb-4">
                 <div className="flex items-center gap-3">
                   <span className="text-brand-muted text-sm w-16">Name</span>

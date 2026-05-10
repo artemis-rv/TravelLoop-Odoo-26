@@ -76,10 +76,12 @@ export const Dashboard: React.FC = () => {
     setSearchLoading(true)
     try {
       const response = await api.get(`/search/cities?q=${encodeURIComponent(query)}`)
-      const results: CityResult[] = response.data?.data || response.data || []
+      // Robust parsing: handle both { success, data } and raw array responses
+      const results = response.data?.data || (Array.isArray(response.data) ? response.data : [])
       setCitySuggestions(results.slice(0, 6))
       setShowSuggestions(true)
-    } catch {
+    } catch (err) {
+      console.error('City search failed:', err)
       setCitySuggestions([])
     } finally {
       setSearchLoading(false)

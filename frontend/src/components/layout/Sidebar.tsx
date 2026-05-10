@@ -7,6 +7,7 @@ export const Sidebar: React.FC = () => {
   const items = [
     ['Dashboard', '/'],
     ['Create Trip', '/trip/create'],
+    ['Search', '/search'],
     ['Profile', '/profile'],
     ['Community', '/community'],
   ]
