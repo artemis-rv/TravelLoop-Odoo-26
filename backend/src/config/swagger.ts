@@ -4,7 +4,7 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Traveloop API",
+      title: "TravelLoop API",
       version: "1.0.0",
       description: "Smart Travel Planner – API Documentation",
     },
