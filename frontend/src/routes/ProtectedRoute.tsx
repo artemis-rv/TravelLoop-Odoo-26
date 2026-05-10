@@ -8,14 +8,15 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const isLoading = useAuthStore((state) => state.isLoading)
+  const isHydrated = useAuthStore((state) => state.isHydrated)
 
-  if (isLoading) {
+  // Wait for localStorage hydration before deciding redirect
+  if (!isHydrated) {
     return <Loader fullScreen size="lg" />
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth/login" replace />
+    return <Navigate to="/welcome" replace />
   }
 
   return <>{element}</>

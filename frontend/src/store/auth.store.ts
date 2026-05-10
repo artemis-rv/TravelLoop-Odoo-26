@@ -7,6 +7,7 @@ interface AuthStore {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  isHydrated: boolean
   setAuth: (auth: AuthResponse) => void
   setUser: (user: User) => void
   logout: () => void
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   token: null,
   isAuthenticated: false,
   isLoading: false,
+  isHydrated: false,
 
   setAuth: (auth: AuthResponse) => {
     localStorage.setItem(AUTH_STORAGE_KEY, auth.token)
@@ -52,16 +54,15 @@ export const useAuthStore = create<AuthStore>((set) => ({
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr)
-        set({
-          token,
-          user,
-          isAuthenticated: true,
-        })
-      } catch (error) {
-        console.error('Failed to hydrate auth store:', error)
+        set({ token, user, isAuthenticated: true, isHydrated: true })
+      } catch {
+        set({ isHydrated: true })
       }
+    } else {
+      set({ isHydrated: true })
     }
   },
 
   setLoading: (loading: boolean) => set({ isLoading: loading }),
 }))
+

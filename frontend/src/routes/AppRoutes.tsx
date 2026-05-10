@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { Dashboard } from '@/modules/dashboard/pages/Dashboard'
@@ -12,10 +12,14 @@ import { CommunityPage } from '@/modules/shared/pages/CommunityPage'
 import { ProfilePage } from '@/modules/profile/pages/ProfilePage'
 import { LoginPage } from '@/modules/auth/pages/LoginPage'
 import { RegisterPage } from '@/modules/auth/pages/RegisterPage'
+import { WelcomePage } from '@/modules/auth/pages/WelcomePage'
 
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {/* Welcome / Landing page — default entry point */}
+      <Route path="/welcome" element={<WelcomePage />} />
+
       {/* Auth Routes */}
       <Route path="/auth/login" element={<LoginPage />} />
       <Route path="/auth/register" element={<RegisterPage />} />
@@ -36,6 +40,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="community" element={<CommunityPage />} />
       </Route>
 
+      {/* Redirect bare / to /welcome for unauthenticated, handled inside ProtectedRoute */}
       {/* 404 */}
       <Route
         path="*"
@@ -45,7 +50,7 @@ export const AppRoutes: React.FC = () => {
               <h1 className="text-6xl font-black text-brand-gold mb-4">404</h1>
               <p className="text-2xl text-brand-text mb-8">Page not found</p>
               <a
-                href="/"
+                href="/welcome"
                 className="bg-brand-gold text-brand-dark px-8 py-4 rounded-2xl font-bold inline-block hover:scale-105 transition"
               >
                 Go Home
