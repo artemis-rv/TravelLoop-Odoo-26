@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 import api from '@/services/api'
 
 interface SearchResult {
@@ -35,8 +37,8 @@ export const SearchPage: React.FC = () => {
 
       if (searchMode === 'city') {
         const response = await api.get(`/search/cities?q=${encodeURIComponent(q)}`)
-        const cities = response.data?.data || response.data || []
-        data = cities.map((c: any) => ({
+        const cities = response.data?.data || (Array.isArray(response.data) ? response.data : [])
+        data = (cities as any[]).map((c: any) => ({
           name: c.name,
           country: c.country,
           lat: c.latitude,
@@ -45,11 +47,11 @@ export const SearchPage: React.FC = () => {
         }))
       } else {
         const response = await api.get(`/search/activities?city=${encodeURIComponent(q)}`)
-        const activities = response.data?.data || response.data || []
-        data = activities.map((a: any) => ({
+        const activities = response.data?.data || (Array.isArray(response.data) ? response.data : [])
+        data = (activities as any[]).map((a: any) => ({
           name: a.name,
-          kinds: a.kinds,
-          dist: a.dist,
+          kinds: a.kinds || a.category,
+          dist: a.dist || 0,
           type: 'activity' as const,
         }))
       }
@@ -93,78 +95,87 @@ export const SearchPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-10">
+      <div className="text-center">
+        <h1 className="text-5xl font-black mb-4">Discover Destinations</h1>
+        <p className="text-brand-muted text-lg">Search for amazing cities or activities for your next trip</p>
+      </div>
 
       {/* Search Controls */}
-      <div className="flex items-center gap-3 flex-wrap">
-        {/* Mode toggle */}
-        <div className="flex rounded-2xl border border-brand-border overflow-hidden">
-          <button
-            onClick={() => { setSearchMode('activity'); setResults([]); setSearched(false) }}
-            className={`px-4 py-2.5 text-sm font-bold transition ${searchMode === 'activity' ? 'bg-brand-gold text-brand-dark' : 'bg-white text-brand-muted'}`}
-          >
-            Activities
-          </button>
-          <button
-            onClick={() => { setSearchMode('city'); setResults([]); setSearched(false) }}
-            className={`px-4 py-2.5 text-sm font-bold transition ${searchMode === 'city' ? 'bg-brand-gold text-brand-dark' : 'bg-white text-brand-muted'}`}
-          >
-            Cities
-          </button>
+      <div className="bg-white p-8 rounded-[36px] border border-brand-border space-y-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder={searchMode === 'activity' ? 'e.g. Paragliding, Goa...' : 'e.g. Paris, Tokyo...'}
+              value={query}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+              className="!py-4 text-lg"
+            />
+          </div>
+          <div className="flex rounded-2xl border border-brand-border overflow-hidden shrink-0">
+            <button
+              onClick={() => { setSearchMode('activity'); setResults([]); setSearched(false) }}
+              className={`px-6 py-4 text-sm font-bold transition ${searchMode === 'activity' ? 'bg-brand-gold text-brand-dark' : 'bg-white text-brand-muted'}`}
+            >
+              Activities
+            </button>
+            <button
+              onClick={() => { setSearchMode('city'); setResults([]); setSearched(false) }}
+              className={`px-6 py-4 text-sm font-bold transition ${searchMode === 'city' ? 'bg-brand-gold text-brand-dark' : 'bg-white text-brand-muted'}`}
+            >
+              Cities
+            </button>
+          </div>
         </div>
 
-        <input
-          type="text"
-          placeholder={searchMode === 'activity' ? 'e.g. Paragliding, Goa...' : 'e.g. Paris, Tokyo...'}
-          value={query}
-          onChange={handleSearchChange}
-          onKeyDown={handleKeyDown}
-          className="flex-1 border border-brand-border px-5 py-2.5 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-all bg-white"
-        />
+        <div className="flex items-center gap-3 flex-wrap">
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value)}
+            className="border border-brand-border px-5 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold bg-white font-semibold text-brand-text transition-all"
+          >
+            <option value="none">Group by</option>
+            <option value="type">Type</option>
+            <option value="country">Country</option>
+          </select>
 
-        <select
-          value={groupBy}
-          onChange={(e) => setGroupBy(e.target.value)}
-          className="border border-brand-border px-3 py-2.5 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold bg-white font-semibold text-sm text-brand-text"
-        >
-          <option value="none">Group by</option>
-          <option value="type">Type</option>
-          <option value="country">Country</option>
-        </select>
+          <select
+            value={filterBy}
+            onChange={(e) => setFilterBy(e.target.value)}
+            className="border border-brand-border px-5 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold bg-white font-semibold text-brand-text transition-all"
+          >
+            <option value="all">Filter</option>
+            <option value="museum">Museum</option>
+            <option value="beach">Beach</option>
+            <option value="mountain">Mountain</option>
+            <option value="restaurant">Restaurant</option>
+          </select>
 
-        <select
-          value={filterBy}
-          onChange={(e) => setFilterBy(e.target.value)}
-          className="border border-brand-border px-3 py-2.5 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold bg-white font-semibold text-sm text-brand-text"
-        >
-          <option value="all">Filter</option>
-          <option value="museum">Museum</option>
-          <option value="beach">Beach</option>
-          <option value="mountain">Mountain</option>
-          <option value="restaurant">Restaurant</option>
-        </select>
-
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="border border-brand-border px-3 py-2.5 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold bg-white font-semibold text-sm text-brand-text"
-        >
-          <option value="default">Sort by...</option>
-          <option value="name">Name</option>
-          <option value="distance">Distance</option>
-        </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="border border-brand-border px-5 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold bg-white font-semibold text-brand-text transition-all"
+          >
+            <option value="default">Sort by...</option>
+            <option value="name">Name</option>
+            <option value="distance">Distance</option>
+          </select>
+        </div>
       </div>
 
       {/* Results */}
       {(searched || loading) && (
-        <div className="bg-white rounded-[28px] border border-brand-border overflow-hidden">
-          <div className="px-6 py-4 border-b border-brand-border">
-            <h2 className="font-black text-lg text-brand-text">
+        <div className="bg-white rounded-[36px] border border-brand-border overflow-hidden shadow-sm">
+          <div className="px-10 py-6 border-b border-brand-border flex items-center justify-between">
+            <h2 className="font-black text-2xl text-brand-text">
               Results
-              {results.length > 0 && (
-                <span className="ml-2 text-brand-muted text-sm font-normal">({results.length} found)</span>
-              )}
             </h2>
+            {results.length > 0 && (
+              <span className="bg-brand-light text-brand-text px-4 py-1.5 rounded-full text-sm font-bold border border-brand-border">
+                {results.length} found
+              </span>
+            )}
           </div>
 
           {loading ? (

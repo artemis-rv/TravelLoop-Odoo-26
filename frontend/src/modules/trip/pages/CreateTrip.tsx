@@ -49,8 +49,8 @@ export const CreateTrip: React.FC = () => {
     setLoadingSuggestions(true)
     try {
       const response = await api.get(`/search/activities?city=${encodeURIComponent(city)}`)
-      const data = response.data?.data || response.data || []
-      setSuggestions(data.slice(0, 6))
+      const data = response.data?.data || (Array.isArray(response.data) ? response.data : [])
+      setSuggestions((data as any[]).slice(0, 6))
     } catch {
       // Silently fail — suggestions are optional
     } finally {
@@ -116,19 +116,6 @@ export const CreateTrip: React.FC = () => {
               {generalError}
             </div>
           )}
-
-          <div className="flex items-center gap-3">
-            <label className="w-32 text-sm font-semibold text-brand-text shrink-0">Start Date:</label>
-            <input
-              type="date"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleChange}
-              required
-              disabled={loading}
-              className="flex-1 border border-brand-border px-4 py-2.5 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-all"
-            />
-          </div>
 
           <div className="flex items-center gap-3">
             <label className="w-32 text-sm font-semibold text-brand-text shrink-0">Select a Place:</label>

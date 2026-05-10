@@ -13,6 +13,7 @@ import { ProfilePage } from '@/modules/profile/pages/ProfilePage'
 import { LoginPage } from '@/modules/auth/pages/LoginPage'
 import { RegisterPage } from '@/modules/auth/pages/RegisterPage'
 import { WelcomePage } from '@/modules/auth/pages/WelcomePage'
+import { SearchPage } from '@/modules/shared/pages/SearchPage'
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -38,6 +39,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="trip/:id/checklist" element={<ChecklistPage />} />
         <Route path="trip/:id/notes" element={<NotesPage />} />
         <Route path="community" element={<CommunityPage />} />
+        <Route path="search" element={<SearchPage />} />
       </Route>
 
       {/* Redirect bare / to /welcome for unauthenticated, handled inside ProtectedRoute */}
