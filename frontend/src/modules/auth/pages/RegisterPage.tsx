@@ -1,75 +1,42 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/auth.store'
 import api from '@/services/api'
 import toast from 'react-hot-toast'
-import { validateField, FieldError, validateFormComplete, validatePasswordMatch } from '@/utils/validation'
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
   const [loading, setLoading] = useState(false)
   const [generalError, setGeneralError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
+    phone: '',
+    city: '',
+    country: '',
+    additionalInfo: '',
     password: '',
     confirmPassword: '',
   })
 
-  const validateSingleField = (fieldName: string, value: string) => {
-    const error = validateField(fieldName, value)
-    if (error) {
-      setFieldErrors((prev) => ({ ...prev, [fieldName]: error.message }))
-    } else {
-      setFieldErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[fieldName]
-        return newErrors
-      })
-    }
-  }
-
-  const handleBlur = (fieldName: string) => {
-    setTouched((prev) => ({ ...prev, [fieldName]: true }))
-    validateSingleField(fieldName, formData[fieldName as keyof typeof formData])
-
-    // Validate password match on confirmPassword blur
-    if (fieldName === 'confirmPassword' && formData.password) {
-      if (!validatePasswordMatch(formData.password, formData.confirmPassword)) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          confirmPassword: 'Passwords do not match',
-        }))
-      }
-    }
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    if (touched[name]) {
-      validateSingleField(name, value)
-    }
+  }
 
-    // Real-time password match validation
-    if (name === 'confirmPassword' && touched['confirmPassword'] && formData.password) {
-      if (!validatePasswordMatch(formData.password, value)) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          confirmPassword: 'Passwords do not match',
-        }))
-      } else {
-        setFieldErrors((prev) => {
-          const newErrors = { ...prev }
-          delete newErrors.confirmPassword
-          return newErrors
-        })
-      }
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => setPhotoPreview(reader.result as string)
+      reader.readAsDataURL(file)
     }
   }
 
@@ -77,23 +44,25 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault()
     setGeneralError('')
 
-    // Validate all fields
-    const errors = validateFormComplete(formData, ['name', 'email', 'password', 'confirmPassword'])
-    if (errors.length > 0) {
-      const errorMap: Record<string, string> = {}
-      errors.forEach((error: FieldError) => {
-        errorMap[error.field] = error.message
-      })
-      setFieldErrors(errorMap)
-      toast.error('Please fix the errors below')
+    if (!formData.firstName || !formData.email || !formData.password) {
+      setGeneralError('Please fill in all required fields')
+      return
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setGeneralError('Passwords do not match')
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setGeneralError('Password must be at least 8 characters')
       return
     }
 
     setLoading(true)
-
     try {
       const response = await api.post('/auth/register', {
-        name: formData.name,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         password: formData.password,
       })
@@ -111,47 +80,119 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-light flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-[36px] border border-brand-border p-10">
-        <h1 className="text-4xl font-black mb-2 text-center text-brand-gold">TravelLoop</h1>
-        <p className="text-center text-brand-muted mb-8">Create your account</p>
+      <div className="max-w-xl w-full bg-white rounded-[36px] border border-brand-border p-10 shadow-md">
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Photo Upload */}
+        <div className="flex justify-center mb-6">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="w-24 h-24 rounded-full bg-brand-light border-2 border-dashed border-brand-border flex items-center justify-center cursor-pointer hover:border-brand-gold transition overflow-hidden"
+          >
+            {photoPreview ? (
+              <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-4xl select-none">📷</span>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+        </div>
+
+        <h1 className="text-3xl font-black mb-1 text-center text-brand-gold">TravelLoop</h1>
+        <p className="text-center text-brand-muted mb-8 text-sm">Create your account</p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           {generalError && (
             <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-2xl text-sm">
               {generalError}
             </div>
           )}
 
-          <div>
+          {/* Row 1: First Name + Last Name */}
+          <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Full Name"
-              name="name"
-              placeholder="John Doe"
-              value={formData.name}
+              label="First Name"
+              name="firstName"
+              placeholder="John"
+              value={formData.firstName}
               onChange={handleChange}
-              onBlur={() => handleBlur('name')}
               required
-              error={touched['name'] && fieldErrors['name']}
+              disabled={loading}
+            />
+            <Input
+              label="Last Name"
+              name="lastName"
+              placeholder="Doe"
+              value={formData.lastName}
+              onChange={handleChange}
               disabled={loading}
             />
           </div>
 
-          <div>
+          {/* Row 2: Email + Phone */}
+          <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Email"
+              label="Email Address"
               type="email"
               name="email"
               placeholder="you@example.com"
               value={formData.email}
               onChange={handleChange}
-              onBlur={() => handleBlur('email')}
               required
-              error={touched['email'] && fieldErrors['email']}
+              disabled={loading}
+            />
+            <Input
+              label="Phone Number"
+              type="tel"
+              name="phone"
+              placeholder="+91 9876543210"
+              value={formData.phone}
+              onChange={handleChange}
               disabled={loading}
             />
           </div>
 
-          <div>
+          {/* Row 3: City + Country */}
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="City"
+              name="city"
+              placeholder="Mumbai"
+              value={formData.city}
+              onChange={handleChange}
+              disabled={loading}
+            />
+            <Input
+              label="Country"
+              name="country"
+              placeholder="India"
+              value={formData.country}
+              onChange={handleChange}
+              disabled={loading}
+            />
+          </div>
+
+          {/* Additional Information */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-semibold text-brand-text">Additional Information</label>
+            <textarea
+              name="additionalInfo"
+              placeholder="Tell us a bit about yourself..."
+              value={formData.additionalInfo}
+              onChange={handleChange}
+              disabled={loading}
+              rows={3}
+              className="border border-brand-border px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-all resize-none"
+            />
+          </div>
+
+          {/* Password row */}
+          <div className="grid grid-cols-2 gap-4">
             <Input
               label="Password"
               type="password"
@@ -159,15 +200,10 @@ export const RegisterPage: React.FC = () => {
               placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
-              onBlur={() => handleBlur('password')}
               required
-              error={touched['password'] && fieldErrors['password']}
               disabled={loading}
-              helperText={!fieldErrors['password'] ? "8+ characters, uppercase, lowercase, and numbers" : undefined}
+              helperText={!formData.password ? "8+ chars, upper, lower, number" : undefined}
             />
-          </div>
-
-          <div>
             <Input
               label="Confirm Password"
               type="password"
@@ -175,25 +211,23 @@ export const RegisterPage: React.FC = () => {
               placeholder="••••••••"
               value={formData.confirmPassword}
               onChange={handleChange}
-              onBlur={() => handleBlur('confirmPassword')}
               required
-              error={touched['confirmPassword'] && fieldErrors['confirmPassword']}
               disabled={loading}
             />
           </div>
 
-          <Button 
-            type="submit" 
-            loading={loading} 
-            className="w-full" 
+          <Button
+            type="submit"
+            loading={loading}
+            className="w-full"
             size="lg"
-            disabled={Object.keys(fieldErrors).length > 0 || loading}
+            disabled={loading}
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? 'Creating Account...' : 'Register User'}
           </Button>
         </form>
 
-        <p className="text-center text-brand-muted mt-6">
+        <p className="text-center text-brand-muted mt-6 text-sm">
           Already have an account?{' '}
           <Link to="/auth/login" className="text-brand-gold font-bold hover:underline">
             Sign in
