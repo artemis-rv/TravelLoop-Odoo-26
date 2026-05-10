@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/auth.store'
+import api from '@/services/api'
+import toast from 'react-hot-toast'
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
@@ -21,32 +23,27 @@ export const RegisterPage: React.FC = () => {
     setError('')
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
+      const msg = 'Passwords do not match'
+      setError(msg)
+      toast.error(msg)
       return
     }
 
     setLoading(true)
 
     try {
-      // TODO: Call API register endpoint
-      // const response = await api.post('/auth/register', {
-      //   name: formData.name,
-      //   email: formData.email,
-      //   password: formData.password,
-      // })
-      // setAuth(response.data)
-      // navigate('/')
-
-      // Mock register for now
-      setTimeout(() => {
-        setAuth({
-          user: { id: '1', name: formData.name, email: formData.email, created_at: new Date().toISOString() },
-          token: 'mock_token',
-        })
-        navigate('/')
-      }, 1000)
+      const response = await api.post('/auth/register', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      })
+      setAuth(response.data)
+      toast.success('Account created successfully!')
+      navigate('/')
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed')
+      const errorMsg = err.response?.data?.error || 'Registration failed'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }

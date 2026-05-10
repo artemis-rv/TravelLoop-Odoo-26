@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/auth.store'
+import api from '@/services/api'
+import toast from 'react-hot-toast'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -20,21 +22,14 @@ export const LoginPage: React.FC = () => {
     setLoading(true)
 
     try {
-      // TODO: Call API login endpoint
-      // const response = await api.post('/auth/login', formData)
-      // setAuth(response.data)
-      // navigate('/')
-      
-      // Mock login for now
-      setTimeout(() => {
-        setAuth({
-          user: { id: '1', name: 'John Doe', email: formData.email, created_at: new Date().toISOString() },
-          token: 'mock_token',
-        })
-        navigate('/')
-      }, 1000)
+      const response = await api.post('/auth/login', formData)
+      setAuth(response.data)
+      toast.success('Login successful!')
+      navigate('/')
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed')
+      const errorMsg = err.response?.data?.error || 'Login failed'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }

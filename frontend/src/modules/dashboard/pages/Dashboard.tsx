@@ -1,27 +1,48 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTripStore } from '@/store/trip.store'
 import { EmptyState } from '@/components/common/EmptyState'
+import { Loader } from '@/components/common/Loader'
+import api from '@/services/api'
+import toast from 'react-hot-toast'
 
 export const Dashboard: React.FC = () => {
   const trips = useTripStore((state) => state.trips)
+  const setTrips = useTripStore((state) => state.setTrips)
+  const isLoading = useTripStore((state) => state.isLoading)
+  const setLoading = useTripStore((state) => state.setLoading)
 
-  const trips_list = [
-    {
-      title: 'Bali Adventure',
-      image:
-        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      title: 'Tokyo Nights',
-      image:
-        'https://images.unsplash.com/photo-1549692520-acc6669e2f0c?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      title: 'Swiss Escape',
-      image:
-        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1600&auto=format&fit=crop',
-    },
-  ]
+  useEffect(() => {
+    fetchTrips()
+  }, [])
+
+  const fetchTrips = async () => {
+    setLoading(true)
+    try {
+      const response = await api.get('/trips')
+      setTrips(response.data.trips || [])
+    } catch (err: any) {
+      console.error('Failed to fetch trips:', err)
+      toast.error('Failed to load trips')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return <Loader fullScreen />
+  }
+
+  // Map trips to display with default images
+  const trips_list = trips.map((trip, index) => ({
+    id: trip.id,
+    title: trip.destination,
+    image: [
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1549692520-acc6669e2f0c?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1600&auto=format&fit=crop',
+    ][index % 3],
+  }))
 
   return (
     <div className="space-y-10">
@@ -106,7 +127,7 @@ export const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {trips_list.map((trip) => (
               <div
-                key={trip.title}
+                key={trip.id}
                 className="bg-white rounded-[30px] overflow-hidden border border-brand-border"
               >
                 <div
@@ -119,14 +140,14 @@ export const Dashboard: React.FC = () => {
 
                   <div className="flex gap-3">
                     <Link
-                      to="/trip/1"
+                      to={`/trip/${trip.id}`}
                       className="flex-1 bg-brand-gold text-center py-3 rounded-2xl font-bold hover:scale-105 transition"
                     >
                       View
                     </Link>
 
                     <Link
-                      to="/trip/1/budget"
+                      to={`/trip/${trip.id}/budget`}
                       className="bg-brand-light px-5 py-3 rounded-2xl font-bold hover:bg-brand-border transition"
                     >
                       Budget

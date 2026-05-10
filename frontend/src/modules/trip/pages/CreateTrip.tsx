@@ -2,10 +2,15 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import api from '@/services/api'
+import { useTripStore } from '@/store/trip.store'
+import toast from 'react-hot-toast'
 
 export const CreateTrip: React.FC = () => {
   const navigate = useNavigate()
+  const addTrip = useTripStore((state) => state.addTrip)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     destination: '',
     travelers: '',
@@ -16,12 +21,27 @@ export const CreateTrip: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
     setLoading(true)
-    // TODO: Call API to create trip
-    setTimeout(() => {
-      setLoading(false)
+
+    try {
+      const response = await api.post('/trips', {
+        title: formData.destination,
+        description: formData.description,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+      })
+
+      addTrip(response.data)
+      toast.success('Trip created successfully!')
       navigate('/')
-    }, 1000)
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || 'Failed to create trip'
+      setError(errorMsg)
+      toast.error(errorMsg)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -29,6 +49,11 @@ export const CreateTrip: React.FC = () => {
       <h1 className="text-5xl font-black mb-10">Create New Trip</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-2xl">
+            {error}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-6">
           <Input
             label="Destination"
