@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -26,6 +27,7 @@ model Trip {
   title        String
   description  String?
   cover_image  String?
+  budget       Float?   @default(0)
   start_date   DateTime?
   end_date     DateTime?
   is_public    Boolean  @default(false)
@@ -48,9 +50,11 @@ model Stop {
   trip_id     String   @db.Uuid
   city_name   String
   country     String?
+  latitude    Float?
+  longitude   Float?
   start_date  DateTime?
   end_date    DateTime?
-  position    Int?
+  position    Int      @default(0)
 
   trip        Trip       @relation(fields: [trip_id], references: [id], onDelete: Cascade)
   activities  Activity[]
@@ -68,6 +72,7 @@ model Activity {
   cost        Float    @default(0)
   duration    Int?
   notes       String?
+  start_time  DateTime?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -84,7 +89,8 @@ model Expense {
   activity_id  String?  @db.Uuid
   amount       Float
   category     String?
-  notes        String?
+  description  String?
+  date         DateTime @default(now())
   created_at   DateTime @default(now())
 
   trip         Trip      @relation(fields: [trip_id], references: [id], onDelete: Cascade)
@@ -110,6 +116,7 @@ model PackingItem {
 model Note {
   id           String   @id @default(uuid()) @db.Uuid
   trip_id      String   @db.Uuid
+  title        String?
   content      String
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
