@@ -232,17 +232,6 @@ export const CreateTrip: React.FC = () => {
         </div>
       </form>
     </div>
-          <label className="text-sm font-semibold text-brand-text mb-2 block">
-            Trip Description
-          </label>
-          <textarea
-            className="border border-brand-border p-4 rounded-2xl w-full h-40 outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-all"
-            placeholder="Describe your dream trip..."
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-          />
         </div>
 
         <div className="flex gap-4 pt-4">

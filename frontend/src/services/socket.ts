@@ -173,10 +173,6 @@ export const emitUserTyping = (tripId: string, field: string): void => {
   getSocket()?.emit('user:typing', { tripId, field })
 }
 
-export const emitExpenseUpdate = (tripId: string, data: any): void => {
-  getSocket()?.emit('expense:update', { tripId, ...data })
-}
-
 // Event listeners
 export const onTripUpdated = (callback: (data: any) => void): void => {
   getSocket()?.on('trip:updated', callback)
