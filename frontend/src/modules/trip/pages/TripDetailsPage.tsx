@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTripStore } from '@/store/trip.store'
 import { Loader } from '@/components/common/Loader'
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates'
 import api from '@/services/api'
 import toast from 'react-hot-toast'
 
@@ -11,6 +12,9 @@ export const TripDetailsPage: React.FC = () => {
   const setSelectedTrip = useTripStore((state) => state.setSelectedTrip)
   const isLoading = useTripStore((state) => state.isLoading)
   const setLoading = useTripStore((state) => state.setLoading)
+
+  // Initialize real-time updates for this trip
+  useRealtimeUpdates(id)
 
   useEffect(() => {
     if (id) {

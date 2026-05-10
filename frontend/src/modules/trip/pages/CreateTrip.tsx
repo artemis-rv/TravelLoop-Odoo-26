@@ -5,12 +5,15 @@ import { Button } from '@/components/ui/Button'
 import api from '@/services/api'
 import { useTripStore } from '@/store/trip.store'
 import toast from 'react-hot-toast'
+import { validateField, FieldError, validateFormComplete, validateDateRange } from '@/utils/validation'
 
 export const CreateTrip: React.FC = () => {
   const navigate = useNavigate()
   const addTrip = useTripStore((state) => state.addTrip)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [generalError, setGeneralError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [formData, setFormData] = useState({
     destination: '',
     travelers: '',
@@ -19,9 +22,69 @@ export const CreateTrip: React.FC = () => {
     description: '',
   })
 
+  const validateSingleField = (fieldName: string, value: string) => {
+    const error = validateField(fieldName, value)
+    if (error) {
+      setFieldErrors((prev) => ({ ...prev, [fieldName]: error.message }))
+    } else {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[fieldName]
+        return newErrors
+      })
+    }
+  }
+
+  const handleBlur = (fieldName: string) => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }))
+    validateSingleField(fieldName, formData[fieldName as keyof typeof formData])
+
+    // Validate date range
+    if (fieldName === 'endDate' && formData.startDate && formData.endDate) {
+      if (!validateDateRange(formData.startDate, formData.endDate)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          endDate: 'End date must be after start date',
+        }))
+      } else {
+        setFieldErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors.endDate
+          return newErrors
+        })
+      }
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (touched[name]) {
+      validateSingleField(name, value)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setGeneralError('')
+
+    // Validate all fields
+    const errors = validateFormComplete(formData, [
+      'destination',
+      'startDate',
+      'endDate',
+      'description',
+    ])
+    if (errors.length > 0) {
+      const errorMap: Record<string, string> = {}
+      errors.forEach((error: FieldError) => {
+        errorMap[error.field] = error.message
+      })
+      setFieldErrors(errorMap)
+      toast.error('Please fix the errors below')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -33,11 +96,11 @@ export const CreateTrip: React.FC = () => {
       })
 
       addTrip(response.data)
-      toast.success('Trip created successfully!')
+      toast.success('Trip created successfully! ✈️')
       navigate('/')
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || 'Failed to create trip'
-      setError(errorMsg)
+      setGeneralError(errorMsg)
       toast.error(errorMsg)
     } finally {
       setLoading(false)
@@ -46,58 +109,129 @@ export const CreateTrip: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-[36px] border border-brand-border p-10">
-      <h1 className="text-5xl font-black mb-10">Create New Trip</h1>
+      <h1 className="text-5xl font-black mb-2">Create New Trip</h1>
+      <p className="text-brand-muted mb-8">Plan your next adventure with TravelLoop</p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-2xl">
-            {error}
+        {generalError && (
+          <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-2xl text-sm">
+            {generalError}
           </div>
         )}
+
         <div className="grid grid-cols-2 gap-6">
-          <Input
-            label="Destination"
-            placeholder="Where are you going?"
-            value={formData.destination}
-            onChange={(e) =>
-              setFormData({ ...formData, destination: e.target.value })
-            }
-            required
-          />
-          <Input
-            label="Number of Travelers"
-            type="number"
-            placeholder="2"
-            value={formData.travelers}
-            onChange={(e) =>
-              setFormData({ ...formData, travelers: e.target.value })
-            }
-            required
-          />
+          <div>
+            <Input
+              label="Destination"
+              name="destination"
+              placeholder="Where are you going?"
+              value={formData.destination}
+              onChange={handleChange}
+              onBlur={() => handleBlur('destination')}
+              required
+              error={touched['destination'] && fieldErrors['destination']}
+              disabled={loading}
+            />
+            {touched['destination'] && fieldErrors['destination'] && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors['destination']}</p>
+            )}
+          </div>
+
+          <div>
+            <Input
+              label="Number of Travelers"
+              type="number"
+              name="travelers"
+              placeholder="2"
+              value={formData.travelers}
+              onChange={handleChange}
+              onBlur={() => handleBlur('travelers')}
+              disabled={loading}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6">
-          <Input
-            label="Start Date"
-            type="date"
-            value={formData.startDate}
-            onChange={(e) =>
-              setFormData({ ...formData, startDate: e.target.value })
-            }
-            required
-          />
-          <Input
-            label="End Date"
-            type="date"
-            value={formData.endDate}
-            onChange={(e) =>
-              setFormData({ ...formData, endDate: e.target.value })
-            }
-            required
-          />
+          <div>
+            <Input
+              label="Start Date"
+              type="date"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+              onBlur={() => handleBlur('startDate')}
+              required
+              error={touched['startDate'] && fieldErrors['startDate']}
+              disabled={loading}
+            />
+            {touched['startDate'] && fieldErrors['startDate'] && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors['startDate']}</p>
+            )}
+          </div>
+
+          <div>
+            <Input
+              label="End Date"
+              type="date"
+              name="endDate"
+              value={formData.endDate}
+              onChange={handleChange}
+              onBlur={() => handleBlur('endDate')}
+              required
+              error={touched['endDate'] && fieldErrors['endDate']}
+              disabled={loading}
+            />
+            {touched['endDate'] && fieldErrors['endDate'] && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors['endDate']}</p>
+            )}
+          </div>
         </div>
 
         <div>
+          <label className="text-sm font-semibold text-brand-text block mb-2">
+            Description
+          </label>
+          <textarea
+            name="description"
+            placeholder="Tell us about your trip..."
+            value={formData.description}
+            onChange={handleChange}
+            onBlur={() => handleBlur('description')}
+            disabled={loading}
+            className={`w-full border border-brand-border px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-all resize-none h-24 ${
+              fieldErrors['description'] ? 'border-red-500 focus:ring-red-500' : ''
+            }`}
+          />
+          <p className="text-xs text-brand-muted mt-1">
+            {formData.description.length}/500 characters
+          </p>
+          {touched['description'] && fieldErrors['description'] && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors['description']}</p>
+          )}
+        </div>
+
+        <div className="flex gap-4">
+          <Button 
+            type="submit" 
+            loading={loading} 
+            className="flex-1" 
+            size="lg"
+            disabled={Object.keys(fieldErrors).length > 0 || loading}
+          >
+            {loading ? 'Creating...' : 'Create Trip'}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => navigate('/')}
+            disabled={loading}
+            className="flex-1 bg-brand-light text-brand-text border border-brand-border hover:bg-gray-100"
+            size="lg"
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </div>
           <label className="text-sm font-semibold text-brand-text mb-2 block">
             Trip Description
           </label>
